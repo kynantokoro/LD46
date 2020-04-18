@@ -1,13 +1,18 @@
 Player = Entity:extend()
 
-function Player:new(area, x, y, animation_path, animation_tag, collision_map)
+function Player:new(area, x, y, animation_path, animation_tag)
     Player.super.new(self, area, x, y)
 
+    self.tag = "Player"
+    self.colmap = current_map
     self.sprite = peachy.new(animation_path, animation_tag)
+    self.vipx = self.x 
+    self.vipy = self.y
+    self.vipimage = peachy.new("res/sprite/Vip.json", "IDLE")
     self.facing = 1
-    self.walk_spd = 0.4
+    self.walk_spd = 0.3
     self.hsp = 0
-    self.max_hsp = 1
+    self.max_hsp = 4
     self.vsp = 0
     self.drag = 0.35
     self.hsp_decimal = 0
@@ -15,81 +20,107 @@ function Player:new(area, x, y, animation_path, animation_tag, collision_map)
     self.jumps = 0
     self.jump_spd = -3.6
     self.jumps_initial = 3 
+    self.found = false
     self.states = {}
-    local IDLE = {
+    local VIP = {
         update = function(dt) 
+
+            self.max_hsp = 2
+            self.walk_spd = 0.2
             
             self:calculateMovement()
 
-            --if self.hsp ~= 0 then self.state = "WALK" end 
+            self:Collisions()
 
-            if input:pressed("jump") then
-                
-                --jump on this frame and change state to "JUMP"
+            self.sprite:update(dt)
+            self.vipx = self.x 
+            self.vipy = self.y
+        end,
+        draw = function()
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + (GRID*2) end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
+        end 
+    }
+    local IDLE = {
+        update = function(dt) 
+            self.max_hsp = 3
+            self.walk_spd = 0.2
+
+            self:calculateMovement()
+
+            if input:pressed("up") then 
                 self:jumped()
             end 
 
             self:Collisions()
 
             self.sprite:update(dt)
-        end,
-        draw = function()
-            self.sprite:draw(self.x, self.y)
+            self.vipimage:update(dt)
+        end, 
+        draw = function() 
+            self.vipimage:draw(self.vipx, self.vipy)
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + GRID end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
         end 
-    }
-    local WALK = {
-        update = function(dt) 
-            
-            self:calculateMovement()
-
-            if self.hsp == 0 then self.state = "IDLE" end
-
-            if down then 
-                self.quad = love.graphics.newQuad(8, 0, 8, 8, self.image:getWidth(), self.image:getHeight())
-            else 
-                self.quad = love.graphics.newQuad(0, 0, 8, 8, self.image:getWidth(), self.image:getHeight())
-            end
-
-            if jump then
-                --jump on this frame and change state to "JUMP"
-                self:jumped()
-            end 
-
-            self:Collisions()
-        end,
-        draw = function()
-            love.graphics.draw(self.image, self.quad, self.x, self.y, 0, 1, self.image_yscale, 0, 0)
-        end
     }
     local JUMP = {
         update = function(dt) 
-            
+            self.max_hsp = 3
+            self.walk_spd = 0.2
+
             self:calculateMovement()
 
-            --if self.hsp ~= 0 then self.state = "WALK" else self.state = "IDLE" end
-
-            if input:pressed("jump") then self:jumped() end
+            if input:pressed("up") then 
+                self:jumped()
+            end
 
             self:Collisions()
-        end,
-        draw = function()
-            self.sprite:draw(self.x, self.y)
-        end
+
+            if self:onGround() then self.state = "IDLE" end 
+
+            self.sprite:update(dt)
+            self.vipimage:update(dt)
+        end, 
+        draw = function() 
+            self.vipimage:draw(self.vipx, self.vipy)
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + GRID end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
+        end 
     }
+    self.states["VIP"] = VIP 
     self.states["IDLE"] = IDLE 
-    self.states["WALK"] = WALK 
-    self.states["JUMP"] = JUMP 
-    self.state = "IDLE"
+    self.states["JUMP"] = JUMP
+    self.state = animation_tag
 end 
 
 function Player:update(dt)
+    if input:pressed("down") then
+        if self.state == "VIP" and self:onGround() then
+            self.state = "IDLE"
+            self.sprite:setTag("IDLE")
+        elseif self.state == "IDLE" then 
+            if self.x >= self.vipx - GRID and self.x <= self.vipx + GRID and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then 
+                self.state = "VIP" 
+                self.sprite:setTag("VIP")
+            end 
+        end 
+    end 
     self.states[self.state].update(dt)
-    camera:follow(self.x+100, self.y)
-    player_state = self.state
+
+    if self.found == true then 
+        cEffect.desaturate.strength = 0.5
+        --camera.rotation = math.sin(t*0.1) * 0.1
+        --camera.scale = 1 + math.sin(t*0.175) * 0.05
+    end 
+
 end 
 
 function Player:draw()
     self.states[self.state].draw()
+    love.graphics.print(self.state, self.x, self.y)
 end 
 
 function Player:calculateMovement()
@@ -140,21 +171,22 @@ function Player:Collisions()
 
     --horizontal collisions
     local side
-    if self.hsp > 0 then side = self.x + GRID else side = self.x end 
+    local multiply_size = 1 
+    if self.state == "VIP" then multiply_size = 2 end 
+    if self.hsp > 0 then side = self.x + (GRID * multiply_size) else side = self.x end 
     --set collision points (top and bottom) 
-    local t1 = colmap:getAtPixel(side + self.hsp, self.y)
-    local t2 = colmap:getAtPixel(side + self.hsp, self.y+GRID)
-    local t3 = colmap:getAtPixel(side + self.hsp, self.y+(GRID/2))
-
+    local t1 = self.colmap:getAtPixel(side + self.hsp, self.y)
+    local t2 = self.colmap:getAtPixel(side + self.hsp, self.y+(GRID*2)-1)
+    local t3 = self.colmap:getAtPixel(side + self.hsp, self.y+GRID)
+    
     if t1 ~= 0 or t2 ~= 0 or t3 ~= 0 then 
+        print("t1 :" .. t1 .. " t2 :" .. t2 .. " t3 :" .. t3)
         --collision found 
         if self.hsp > 0 then 
             if self.x % GRID ~= 0 then 
                 self.x = self.x - (self.x % GRID) + GRID
-                print(self.x)
             else 
                 self.x = self.x
-            print(self.x)
             end 
         else self.x = self.x - (self.x % GRID) - (side - self.x) end 
         self.hsp = 0
@@ -166,8 +198,8 @@ function Player:Collisions()
     local side 
     if self.vsp > 0 then side = self.y + (GRID*2) else side = self.y  end 
     --set collision points(left and right)
-    local t1 = colmap:getAtPixel(self.x, side + self.vsp)
-    local t2 = colmap:getAtPixel(self.x+GRID, side + self.vsp)
+    local t1 = self.colmap:getAtPixel(self.x, side + self.vsp)
+    local t2 = self.colmap:getAtPixel(self.x+(GRID-1), side + self.vsp)
 
     if t1 ~= 0 or t2 ~= 0 then 
         --collision found 
@@ -197,10 +229,10 @@ end
 
 function Player:onGround()
     local side = self.y + (GRID*2) 
-    local t1 = colmap:getAtPixel(self.x, side + 1)
-    local t2 = colmap:getAtPixel(self.x + GRID, side + 1)
+    local t1 = self.colmap:getAtPixel(self.x, side + 1)
+    local t2 = self.colmap:getAtPixel(self.x + GRID, side + 1)
     
-    if t1 ~= nil and t2 ~= nil then 
+    if t1 ~= 0 or t2 ~= 0 then 
         return true 
     else 
         return false 

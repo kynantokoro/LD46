@@ -26,12 +26,14 @@ function love.load()
     recureiveEnumerate("src/rooms", room_files)
     requireFiles(room_files)
 
-    gotoRoom("FirstRoom")
+    gotoRoom("rTitle")
     consoleLine() 
 end
 
 function love.update(dt)
     
+    Timer.update(dt)
+
     --increment global timer 
     t = t + 1
 
@@ -50,7 +52,7 @@ function love.draw()
         -------------GAME------------
     --end)
     love.graphics.setCanvas()
-    --cEffect(function()
+    cEffect(function()
         --scale the vCanvas
         love.graphics.push()
         love.graphics.translate(canvas_offset.x, canvas_offset.y)
@@ -59,7 +61,7 @@ function love.draw()
         --set the x_scale to 2 if mood is ATARI
         love.graphics.draw(vCanvas, 0, 0, 0, 1, 1)
         love.graphics.pop()
-    --end)
+    end)
     love.graphics.translate(canvas_offset.x, canvas_offset.y)
     -------------GUI------------
 
@@ -96,9 +98,13 @@ function graphicsInit()
     gheight = windowHeight - (canvas_offset.y * 2)
 
     --shaders initialize 
-    --cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.chromasep)
-    --vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines)
+    cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate).chain(moonshine.effects.fastgaussianblur).chain(moonshine.effects.chromasep)
+    cEffect.chromasep.radius = 0
+    vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines)
+    vEffect.scanlines.opacity = 0.1
     --graphics initialization
+    cEffect.desaturate.tint = {255, 0, 0}
+    cEffect.desaturate.strength = 0
 
     camera = Camera(0, 0, GAMEWIDTH, GAMEHEIGHT)
 
@@ -113,6 +119,10 @@ function graphicsInit()
         love.window.updateMode( gwidth, gheight)
     end
 
+    
+    camera:setFollowLerp(0.1) 
+    camera:setFollowStyle("PLATFORMER")
+
 
     print("graphics initialized")
 
@@ -122,8 +132,9 @@ function inputInit()
     input:bind("left", "left")
     input:bind("right", "right")
     input:bind("up", "up")
-    input:bind("space", "jump")
+    input:bind("space", "space")
     input:bind("down", "down")
+    input:bind("return", "enter")
 
     input:bind('f1', function()
         print("Before collection: " .. collectgarbage("count")/1024)
@@ -148,12 +159,12 @@ function inputInit()
 end
 
 function audioInit() 
-    love.audio.setEffect("myReverb", {type = "reverb", gain = 0.5, density = 1, decaytime = 1})
-    snd_noise = love.audio.newSource("res/tracker/gamenoise.it", "stream")
-    snd_noise:setEffect("myReverb")
+    love.audio.setEffect("myReverb", {type = "reverb", gain = 1, density = 5, decaytime = 3})
+    --snd_noise = love.audio.newSource("res/tracker/gamenoise.it", "stream")
+    --snd_noise:setEffect("myReverb")
 
-    love.audio.play(snd_noise)
-    love.audio.setVolume(0.8)
+    --love.audio.play(snd_noise)
+    --love.audio.setVolume(0.8)
 end 
 
 --this function loops throgh item in a folder and list it in a table

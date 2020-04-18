@@ -3,7 +3,7 @@
 
 Entity = Object:extend()
 
-function Entity:new(area, x, y)
+function Entity:new(area, x, y, image_path)
     --add optional arguments as a table, and convert it in to a self.foo = value 
     --local opts = opts or {}
     --if opts then for k, v in pairs(opts) do self[k] = v end end 
@@ -11,6 +11,9 @@ function Entity:new(area, x, y)
     self.area = area 
     self.x = x 
     self.y = y 
+    if image_path ~= nil then
+        self.image = love.graphics.newImage(image_path)
+    end 
     self.id = UUID()
     self.dead = false 
 end 
