@@ -66,6 +66,9 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
             if self.attackCount > self.attackCooldown then 
                 self.state = "IDLE"
             end 
+            if self.foundbuffer <= 0 then 
+                self.state = "IDLE"
+            end 
         end,
         draw = function ()
             love.graphics.setColor(1, 0,0,1)
@@ -98,6 +101,7 @@ function Enemy:draw()
     
     love.graphics.print(self.facing, self.x, self.y)
     love.graphics.print(self.state, self.x+10, self.y)
+    love.graphics.line(self.x, self.y + (GRID*2) - 1, self.x + 10, self.y + (GRID*2) - 1)
 end 
 
 function Enemy:calculateMovement()

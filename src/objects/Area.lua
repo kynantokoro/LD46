@@ -18,7 +18,8 @@ function Area:update(dt)
     for i = #self.game_objects, 1, -1 do 
         local game_object = self.game_objects[i]
         if game_object.tag == "Enemy" then 
-            if self:CheckFound(self.player, game_object) then 
+            --found player
+            if self:CheckFound(self.player.x, self.player.y, game_object) == true then 
                 game_object.foundbuffer = game_object.foundbuffer + 1
                 if game_object.foundbuffer >= game_object.foundtime then 
                     game_object.state = "ATTACK"
@@ -27,13 +28,23 @@ function Area:update(dt)
                     self.target_x = game_object.x
                     self.target_y = game_object.y
                 end
-            else
+            --found vip
+            elseif self:CheckFound(self.player.vipx, self.player.vipy, game_object) == true then 
+                game_object.foundbuffer = game_object.foundbuffer + 1
+                if game_object.foundbuffer >= game_object.foundtime then 
+                    game_object.state = "ATTACK"
+                    game_object.attackCount = 0
+                    self.player.found = true
+                    self.target_x = game_object.x
+                    self.target_y = game_object.y
+                end
+            else 
                 game_object.foundbuffer = 0
-            end 
+            end
         elseif game_object.tag == "Player" then 
-            if self.player.found == false then 
-                self.target_x = self.player.x
-                self.target_y = self.player.y
+            if self.player.found == false then
+                self.target_x = self.player.x + self.player.camoffset_x
+                self.target_y = self.player.y + self.player.camoffset_y
             end 
         elseif game_object.tag == "TitleScreen" then 
             camera:setFollowLerp(1.0)
@@ -68,36 +79,44 @@ function Area:getGameObjects(callback)
     return match_objects
 end 
 
-function Area:CheckFound(player, game_object)
-    local player = player 
+function Area:CheckFound(player_x, player_y, game_object)
     local enemy = game_object
-    local px = player.x 
-    local py = player.y
+    local px = player_x 
+    local py = player_y
     local ex = enemy.x
     local ey = enemy.y 
-    if py + (GRID*2) - 1 >= ey and py + GRID <= ey + (GRID*2) - 1 then 
+    local max_check_distance = 8
+    if py + (GRID*2) - 1 >= ey and py + GRID + 5 <= ey + (GRID*2) - 1 then 
         if enemy.facing < 0 and px < ex then 
             local dif = (ex - (ex % GRID)) - (px - (px % GRID))
             local dift = dif/GRID
-            print(dift)
+            if dift > max_check_distance then return false end 
             for i=1, dift-1 do 
-                local tid = current_map:getAtPixel(px+i*GRID, py)
+                local tid = current_map:getAtPixel((px - (px % GRID))+(i*GRID), py + GRID + (GRID/2))
                 if tid ~= 0 then 
                     return false
                 end 
             end 
             return true
+
+            --if player.attacked == true and if enemy.facing < 0 and px > ex then 
+                --enemy.state = DEAD
+            --end
+
         elseif enemy.facing > 0 and px > ex then 
             local dif = (px - (px % GRID)) - (ex - (ex % GRID))
             local dift = dif/GRID
-            print(dift)
+            if dift > max_check_distance then return false end 
             for i=1, dift-1 do 
-                local tid = current_map:getAtPixel(ex+i*GRID, py)
+                local tid = current_map:getAtPixel(ex+(i*GRID), py + GRID + 1)
                 if tid ~= 0 then 
                     return false
                 end 
             end 
             return true
+            --if player.attacked == true and if enemy.facing < 0 and px > ex then 
+                --enemy.state = DEAD
+            --end
         end 
     end
 end 

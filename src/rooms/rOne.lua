@@ -1,7 +1,7 @@
 rOne = Object:extend()
 
 function rOne:new()
-    graphicsInit()
+    roomInit()
     --initialize the room here!
     self.area = Area(self)
 
@@ -12,11 +12,20 @@ function rOne:new()
     love.audio.stop()
     self.music:play()
 
+    camera:setBounds(current_map:getBounds())
 end 
 
 function rOne:update(dt) 
     self.area:update(dt)
+    
+    camera:setFollowStyle("LOCKON")
     camera:update(dt)
+    camera:setFollowLerp(0.15)
+
+    if input:pressed("enter") then 
+        gotoRoom("rOne")
+        roomInit()
+    end 
 end 
 
 function rOne:draw() 

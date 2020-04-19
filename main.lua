@@ -43,14 +43,15 @@ end
 function love.draw() 
     love.graphics.setCanvas(vCanvas)
     love.graphics.clear()
-    --vEffect(function()
+    vEffect(function()
         -------------GAME------------
 
         --draw things on the virtual canvas
         if current_room then current_room:draw() end 
+        camera:draw()
 
         -------------GAME------------
-    --end)
+    end)
     love.graphics.setCanvas()
     cEffect(function()
         --scale the vCanvas
@@ -98,15 +99,17 @@ function graphicsInit()
     gheight = windowHeight - (canvas_offset.y * 2)
 
     --shaders initialize 
-    cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate).chain(moonshine.effects.fastgaussianblur).chain(moonshine.effects.chromasep)
-    cEffect.chromasep.radius = 0
-    vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines)
+    cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate)
+    vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines).chain(moonshine.effects.pixelate)
     vEffect.scanlines.opacity = 0.1
+    vEffect.pixelate.size = 0.0001
     --graphics initialization
     cEffect.desaturate.tint = {255, 0, 0}
     cEffect.desaturate.strength = 0
 
     camera = Camera(0, 0, GAMEWIDTH, GAMEHEIGHT)
+
+    camera.draw_deadzone = true
 
     vCanvas = love.graphics.newCanvas(GAMEWIDTH, GAMEHEIGHT)
 
@@ -123,6 +126,7 @@ function graphicsInit()
     camera:setFollowLerp(0.1) 
     camera:setFollowStyle("PLATFORMER")
 
+    love.graphics.setLineWidth(1)
 
     print("graphics initialized")
 
@@ -132,9 +136,9 @@ function inputInit()
     input:bind("left", "left")
     input:bind("right", "right")
     input:bind("up", "up")
-    input:bind("space", "space")
     input:bind("down", "down")
     input:bind("return", "enter")
+    input:bind("space", "reset")
 
     input:bind('f1', function()
         print("Before collection: " .. collectgarbage("count")/1024)
@@ -159,9 +163,23 @@ function inputInit()
 end
 
 function audioInit() 
+    --wav sfx loading 
+    snd_jump1 = love.audio.newSource("res/SFX/jump8bit.wav", "static")
+    snd_jump2 = love.audio.newSource("res/SFX/jump8bit.wav", "static")
+    snd_jump3 = love.audio.newSource("res/SFX/jump8bit.wav", "static")
+    snd_landing = love.audio.newSource("res/SFX/landing8bit.wav", "static")
+    snd_pickdown = love.audio.newSource("res/SFX/pickdown8bit.wav", "static")
+    snd_pickup = love.audio.newSource("res/SFX/pickup8bit.wav", "static")
+    snd_walking = love.audio.newSource("res/SFX/walking8bit.wav", "static")
+
+    --tracker files loading
     love.audio.setEffect("myReverb", {type = "reverb", gain = 1, density = 5, decaytime = 3})
     --snd_noise = love.audio.newSource("res/tracker/gamenoise.it", "stream")
     --snd_noise:setEffect("myReverb")
+    
+    snd_landing:setPitch(1.4)
+    snd_jump2:setPitch(1.02)
+    snd_jump3:setPitch(1.04)
 
     --love.audio.play(snd_noise)
     --love.audio.setVolume(0.8)
@@ -264,4 +282,24 @@ function switchFullscreen()
 
     graphicsInit()
 
+end
+
+function roomInit()
+    --shaders initialize 
+    --cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate)
+    --vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines)
+    vEffect.scanlines.opacity = 0.1
+    --graphics initialization
+    cEffect.desaturate.tint = {255, 0, 0}
+    cEffect.desaturate.strength = 0
+
+    camera = Camera(0, 0, GAMEWIDTH, GAMEHEIGHT)
+
+    camera.draw_deadzone = true
+
+    vCanvas = love.graphics.newCanvas(GAMEWIDTH, GAMEHEIGHT)
+    
+    camera:setFollowLerp(1.0) 
+
+    love.graphics.setLineWidth(1)
 end
