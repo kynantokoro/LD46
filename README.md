@@ -1,3 +1,3 @@
-# ShinkaiGameTemplate
+# The Bodyguard
 
-Template project for making games in lua and love2d.
+A game made in 3 days for LDjam
