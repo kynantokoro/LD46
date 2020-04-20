@@ -31,6 +31,10 @@ function rSix:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rSix")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rSix")
+    end 
 end 
 
 function rSix:draw() 

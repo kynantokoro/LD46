@@ -75,8 +75,9 @@ function Area:update(dt)
 
             --if vipx or vipy - playerx or player y is out of GAMEWIDTH or GAMEHEIGHT then self.room.state = "FOUND" and prompt restart
             local difx = math.abs(self.player.vipx - self.player.x)
+            local dify = math.abs(self.player.vipy - self.player.y)
             self.player.vipOutOfBound = false 
-            if difx > GAMEWIDTH then 
+            if difx > GAMEWIDTH  then 
                 self.player.vipOutOfBound = true 
             end 
 
@@ -93,12 +94,13 @@ function Area:update(dt)
                    self.player.y + GRID > game_object.y then 
                         if self.player.state == "VIP" and self.player.hasKey then 
                             self.room.transition = true
+                            game_object.notOpen = false
+                        elseif  self.player.end_room then 
+                            self.room.transition = true
                         end 
                 end 
             end 
         elseif game_object.tag == "Key" then 
-            --print(game_object.x)
-            --print(self.player.x)
             if self.player.x + (GRID*0.5) < game_object.x + GRID and
                 self.player.x + (GRID*0.5) > game_object.x and 
                 self.player.y + (GRID*1.5) < game_object.y + GRID and 
@@ -129,6 +131,9 @@ function Area:draw()
     end 
     for _, game_object in ipairs(self.game_objects) do 
         if game_object.tag == "Player" then game_object:draw() end 
+    end 
+    for _, game_object in ipairs(self.game_objects) do 
+        if game_object.tag == "Tilemap" then game_object:drawFront() end 
     end 
 end 
 
@@ -182,11 +187,10 @@ function Area:CheckFound(player_x, player_y, game_object)
             end 
             return true
 
-        elseif self.player.attacked == true and enemy.facing > 0 and px < ex then 
-            local max_check_distance = 8
+        elseif self.player.attacked == true and enemy.facing > 0 and px < ex and self.player.facing > 0 then 
+            local max_check_distance = 9
             local dif = (ex - (ex % GRID)) - (px - (px % GRID))
             local dift = dif/GRID
-            print("dift :" .. dift .. " facing :" .. enemy.facing .. "id : " .. enemy.id)
             local succes = true
             if dift > max_check_distance then succes = false end 
             if succes == true then 
@@ -206,11 +210,10 @@ function Area:CheckFound(player_x, player_y, game_object)
 
             end 
             
-        elseif self.player.attacked == true and enemy.facing < 0 and px > ex then 
+        elseif self.player.attacked == true and enemy.facing < 0 and px > ex and self.player.facing < 0 then 
             local max_check_distance = 8
             local dif = (px - (px % GRID)) - (ex - (ex % GRID))
             local dift = dif/GRID
-            print("dift :" .. dift .. " facing :" .. enemy.facing .. "id : " .. enemy.id)
             local succes = true
             if dift > max_check_distance then succes = false end 
             if succes == true then 

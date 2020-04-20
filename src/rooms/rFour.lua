@@ -31,6 +31,11 @@ function rFour:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rFour")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rFour")
+    end 
+
 end 
 
 function rFour:draw() 

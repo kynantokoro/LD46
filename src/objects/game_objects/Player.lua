@@ -8,20 +8,29 @@ function Player:new(area, x, y, animation_path, animation_tag)
     self.colmap = current_map
     self.sprite = peachy.new(animation_path, animation_tag)
     self.thankyou = love.graphics.newImage("res/atlas/sheishei.png")
+    self.sheishei = false
+    self.arrow = peachy.new("res/sprite/key.json", "DOWNARROW")
+    self.arrow_anim = false
     self.bullet = peachy.new("res/sprite/bullet.json", "BULLET")
     self.bullet_anim = false
     self.bullet:onLoop(function()
         self.bullet_anim = false
     end )
+    self.end_room = false
     self.play_found = true    
     self.image_xscale = 1 
     self.image_yscale = 1
     self.hasKey = false
-    self.knife = peachy.new("res/sprite/knife.json", "hold")
-    self.knifeframe = 0
-    self.knifeinitial = 30
+    self.gun = peachy.new("res/sprite/gun.json", "hold")
+    self.gun_anim = false 
+    self.gun:onLoop(function ()
+        self.gun_anim = false
+    end)
+    self.gunframe = 0
+    self.guninitial = 30
     self.vipx = self.x 
     self.vipy = self.y
+    self.vipfacing = 1
     self.vipimage = peachy.new("res/sprite/Vip.json", "IDLE")
     self.facing = 1
     self.walk_spd = 0.3
@@ -51,6 +60,8 @@ function Player:new(area, x, y, animation_path, animation_tag)
     self.states = {}
     local VIP = {
         update = function(dt) 
+
+            self.arrow_anim = false
 
             self.max_hsp = 2
             self.walk_spd = 0.2
@@ -86,10 +97,12 @@ function Player:new(area, x, y, animation_path, animation_tag)
             self.max_hsp = 3
             self.walk_spd = 0.2
 
+            self.arrow_anim = true
+
             self:calculateMovement()
 
             if self:onGround() then self.jumps = self.jumps_initial end
-            if input:pressed("up") then 
+            if input:pressed("up") and self.game == true then 
                 self:jumped()
             end 
 
@@ -105,7 +118,9 @@ function Player:new(area, x, y, animation_path, animation_tag)
             end 
         end, 
         draw = function() 
-            self.vipimage:draw(self.vipx, self.vipy)
+            local draw_x = self.vipx 
+            if self.vipfacing < 0 then draw_x = self.vipx + (GRID*2) end
+            self.vipimage:draw(draw_x, self.vipy, 0, self.vipfacing)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
             self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
@@ -116,14 +131,14 @@ function Player:new(area, x, y, animation_path, animation_tag)
             self.max_hsp = 3
             self.walk_spd = 0.2
 
-
+            self.arrow_anim = true
 
             snd_walking:play()
 
             self:calculateMovement()
 
             if self:onGround() then self.jumps = self.jumps_initial end
-            if input:pressed("up") then 
+            if input:pressed("up") and self.game == true then 
                 self:jumped()
             end 
 
@@ -139,7 +154,9 @@ function Player:new(area, x, y, animation_path, animation_tag)
             end 
         end, 
         draw = function() 
-            self.vipimage:draw(self.vipx, self.vipy)
+            local draw_x = self.vipx 
+            if self.vipfacing < 0 then draw_x = self.vipx + (GRID*2) end
+            self.vipimage:draw(draw_x, self.vipy, 0, self.vipfacing)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
             self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
@@ -150,10 +167,12 @@ function Player:new(area, x, y, animation_path, animation_tag)
             self.max_hsp = 3
             self.walk_spd = 0.2
 
+            self.arrow_anim = true
+
             self:calculateMovement() 
 
             if self:onGround() then self.jumps = self.jumps_initial end
-            if input:pressed("up") then 
+            if input:pressed("up") and self.game == true then 
                 self:jumped()
             end
 
@@ -170,7 +189,9 @@ function Player:new(area, x, y, animation_path, animation_tag)
             end 
         end, 
         draw = function() 
-            self.vipimage:draw(self.vipx, self.vipy)
+            local draw_x = self.vipx 
+            if self.vipfacing < 0 then draw_x = self.vipx + (GRID*2) end
+            self.vipimage:draw(draw_x, self.vipy, 0, self.vipfacing)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
             self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
@@ -181,10 +202,12 @@ function Player:new(area, x, y, animation_path, animation_tag)
             self.max_hsp = 3
             self.walk_spd = 0.2
 
+            self.arrow_anim = false
+
             self:calculateMovement() 
 
             if self:onGround() then self.jumps = self.VIPjumps_initial end
-            if input:pressed("up") then 
+            if input:pressed("up") and self.game == true then 
                 self:VIPjumped()
             end
 
@@ -216,39 +239,57 @@ function Player:new(area, x, y, animation_path, animation_tag)
 end 
 
 function Player:update(dt)
-    if input:pressed("down") and self.game == true then
+    if input:pressed("down") and self.game == true and self.end_room == false then
         if self.state == "VIP" and self:onGround() then
             self.state = "IDLE"
             snd_pickdown:play()
             self.sprite:setTag("IDLE")
-        elseif self.state == "IDLE" then 
-            if self.x >= self.vipx - (GRID*2) and self.x <= self.vipx + (GRID*2) and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then 
-                self.state = "VIP" 
+        elseif self.state == "IDLE" then
+            self.arrow:draw(self.vipx, self.vipy)
+            if self.x > self.vipx - (GRID*2) and self.x < self.vipx + (GRID*2) and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then 
+                self.state = "VIP"
+                self.x = self.vipx 
                 snd_pickup:play()
                 self.sprite:setTag("VIP")
             end 
+        end 
+    elseif input:pressed("down") and self.end_room == true then 
+        if self.x >= self.vipx - (GRID*2) and self.x <= self.vipx + (GRID*2) and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then  
+            snd_thankyou:play()
+            self.sheishei = true
+            Timer.after(2, function () 
+                self.sheishei = false
+            end )
         end 
     end 
 
     self.attacked = false
     if input:pressed("space") then 
         if self.state ~= "VIP" and self.state ~= "VIPJUMP" and self.game == true then 
+            self.gun_anim = true
+            self.gun:setTag("fire")
             self.bullet_anim = true 
             self:stabbed()
+            self.bullet:setFrame(1)
         end 
+    end  
+
+    if self.gun_anim == false then 
+        self.gun:setTag("hold")
     end 
 
     if self.bullet_anim == true then  
         self.bullet:update(dt)
     end 
 
-    self.knife:update(dt)
+    self.gun:update(dt)
+    self.arrow:update(dt)
 
     self.states[self.state].update(dt)
 
     if self.vipOutOfBound then 
         if self.found == false then 
-            local dif = (math.abs(self.x - self.vipx) - GAMEWIDTH) * 0.1
+            local dif = (math.abs(self.x - self.vipx) - GAMEWIDTH) * 0.08
             vEffect.pixelate.size = 0.0001 + dif
         else 
             vEffect.pixelate.size = 0.0001 
@@ -273,21 +314,24 @@ end
 function Player:draw()
     self.states[self.state].draw()
 
+    if self.arrow_anim == true then 
+        self.arrow:draw(self.vipx + 4, self.vipy - GRID - 2)
+    end 
+
+    local draw_x = self.x 
     if self.bullet_anim == true then 
-        self.bullet:draw(self.x, self.y + GRID, 0, self.facing)
+        if self.facing > 0 then draw_x = self.x + GRID end
+        self.bullet:draw(draw_x, self.y + GRID, 0, self.facing)
     end 
 
     local draw_x = self.x 
     if self.state ~= "VIP" and self.state ~= "VIPJUMP" then 
-        --love.graphics.draw(self.thankyou, self.vipx - GRID, self.vipy - (GRID*4))
+        if self.end_room == true and self.sheishei == true then 
+            love.graphics.draw(self.thankyou, self.vipx - GRID, self.vipy - (GRID*4))
+        end 
         if self.facing > 0 then draw_x = self.x + GRID end
-        self.knife:draw(draw_x, self.y+GRID, 0, self.facing)
-    else 
-        
+        self.gun:draw(draw_x, self.y+GRID+1, 0, self.facing)
     end 
-
-    --love.graphics.print(self.state, self.x, self.y)
-    --love.graphics.print(self.attacked and 'true' or 'false', self.x, self.y+10)
 end 
 
 function Player:calculateMovement()
@@ -443,7 +487,7 @@ end
 
 function Player:jumped()
 
-    if self.jumps > 0 then
+    if self.jumps > 0 then 
         if self.jumps == 3 then 
             snd_jump1:stop()
             snd_jump1:play()

@@ -32,6 +32,10 @@ function rThree:update(dt)
         gotoRoom("rThree")
         --roomInit()
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rThree")
+    end 
 end 
 
 function rThree:draw() 

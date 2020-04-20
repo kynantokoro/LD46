@@ -108,7 +108,7 @@ function Tilemap:new(area, x, y, map_path)
                             local xx = x * self.tileset.tilewidth 
                             local yy = y * self.tileset.tileheight
                             
-                            self.Foreground:add(
+                            self.ForegroundBatch:add(
                                 quad,
                                 xx, 
                                 yy
@@ -126,7 +126,6 @@ function Tilemap:new(area, x, y, map_path)
                 local etype = object.properties["etype"]
                 local animation_path = object.properties["animation_path"]
                 local initial_tag = object.properties["initial_tag"]
-                print(game_object)
                 if game_object == "Player" then 
                     area:addGameObject(game_object, object.x, object.y, animation_path, initial_tag)
                 elseif game_object == "Enemy" then 
@@ -151,8 +150,11 @@ function Tilemap:update(dt)
 end 
 
 function Tilemap:draw()
-    love.graphics.draw(self.BackgroundBatch, math.floor(camera.x*0.5) - 100)
+    love.graphics.draw(self.BackgroundBatch, math.floor(camera.x*0.5) - 50)
     love.graphics.draw(self.collisionBatch)
+end 
+
+function Tilemap:drawFront()
     love.graphics.draw(self.ForegroundBatch)
 end 
 

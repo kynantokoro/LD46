@@ -1,6 +1,6 @@
 { "frames": [
    {
-    "filename": "knife 0.aseprite",
+    "filename": "gun 0.aseprite",
     "frame": { "x": 0, "y": 0, "w": 16, "h": 8 },
     "rotated": false,
     "trimmed": false,
@@ -9,19 +9,19 @@
     "duration": 100
    },
    {
-    "filename": "knife 1.aseprite",
+    "filename": "gun 1.aseprite",
     "frame": { "x": 16, "y": 0, "w": 16, "h": 8 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 8 },
     "sourceSize": { "w": 16, "h": 8 },
-    "duration": 100
+    "duration": 50
    }
  ],
  "meta": {
   "app": "http://www.aseprite.org/",
   "version": "1.2.16.3-x64",
-  "image": "knife.png",
+  "image": "gun.png",
   "format": "RGBA8888",
   "size": { "w": 32, "h": 8 },
   "scale": "1",

@@ -16,6 +16,9 @@ function rTwo:new()
     love.audio.stop()
     self.music:play()
 
+    self.area.player.hasKey = true
+    self.dontDrawKey = true
+
     camera:setBounds(current_map:getBounds())
 end 
 
@@ -31,6 +34,11 @@ function rTwo:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rTwo")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rTwo")
+    end 
+
 end 
 
 function rTwo:draw() 

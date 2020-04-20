@@ -3,7 +3,7 @@ rSeven = rGame:extend()
 function rSeven:new()
     rSeven.super.new(self)
 
-    self.next = "rTitle"
+    self.next = "rEnd"
     --initialize the room here!
     self.area = Area(self)
 
@@ -31,6 +31,11 @@ function rSeven:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rSeven")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rSeven")
+    end 
+
 end 
 
 function rSeven:draw() 

@@ -6,9 +6,11 @@ function rGame:new()
     self.transition = false
     self.state = "TRANSITION"
     self.t = 0
+    self.tt = 0.0001
     self.pixelsize = 5
 
     self.key = peachy.new("res/sprite/key.json", "INITIAL")
+    self.dontDrawKey = false
 
 end 
 
@@ -31,8 +33,14 @@ function rGame:update(dt)
     self.key:update(dt)
 
     if self.transition == true then 
-        self.t = self.t + 0.2 
-        local size = math.min(self.t, self.pixelsize)
+        if self.isTitle then 
+            self.tt = self.tt + 0.2 
+        else 
+            Timer.after(1, function()
+                self.tt = self.tt + 0.2 
+            end)
+        end 
+        local size = math.min(self.tt, self.pixelsize)
         vEffect.pixelate.size = size
         if size == self.pixelsize then
             self.state = "CHANGE"
@@ -46,7 +54,7 @@ function rGame:update(dt)
 end 
 
 function rGame:draw() 
-    if self.area.player.hasKey == true then 
+    if self.area.player.hasKey == true and self.dontDrawKey == false then 
         self.key:draw(10, 10)
     end 
 end     

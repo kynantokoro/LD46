@@ -127,11 +127,7 @@ function Enemy:draw()
     if self.state == "ATTACK" then 
         self.exclamation:draw(self.x - math.abs(math.sin(t*0.1)) * 4 , self.y - (GRID*2) - math.abs(math.sin(t*0.1)*4 ), 0, 1 + math.abs(math.sin(t*0.1)), 1 + math.abs(math.sin(t*0.1)))
     end 
-
-    --love.graphics.print(self.facing, self.x, self.y)
-    --love.graphics.print(self.state, self.x+10, self.y)
-    --love.graphics.print(self.id, self.x+10, self.y-10)
-    --love.graphics.line(self.x, self.y + (GRID*2) - 1, self.x + 10, self.y + (GRID*2) - 1)
+    
 end 
 
 function Enemy:calculateMovement()

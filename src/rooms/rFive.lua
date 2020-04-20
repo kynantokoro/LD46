@@ -31,6 +31,11 @@ function rFive:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rFive")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rFive")
+    end 
+
 end 
 
 function rFive:draw() 

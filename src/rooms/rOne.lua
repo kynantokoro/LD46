@@ -16,6 +16,13 @@ function rOne:new()
     love.audio.stop()
     self.music:play()
 
+    self.area.player.vipx = 178
+    self.area.player.vipy = self.area.player.y - (GRID*2)
+    self.area.player.vipfacing = -1
+
+    self.area.player.hasKey = true
+    self.dontDrawKey = true
+
     camera:setBounds(current_map:getBounds())
 end 
 
@@ -31,6 +38,11 @@ function rOne:update(dt)
     if input:pressed("enter") then 
         gotoRoom("rOne")
     end 
+
+    if input:pressed("space") and self.area.player.game == false then 
+        gotoRoom("rOne")
+    end 
+
 end 
 
 function rOne:draw() 

@@ -5,6 +5,8 @@ function rTitle:new()
 
     self.next = "rOne"
 
+    self.isTitle = true
+
     --initialize the room here!
     self.area = Area(self)
 
@@ -51,10 +53,10 @@ end
 
 function rTitle:draw() 
     vEffect(function()
-        camera:attach()
+        --camera:attach()
         
         self.area:draw()
 
-        camera:detach()
+        --camera:detach()
     end)
 end 

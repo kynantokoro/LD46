@@ -67,8 +67,6 @@ function love.draw()
     love.graphics.translate(canvas_offset.x, canvas_offset.y)
     -------------GUI------------
 
-    love.graphics.print(love.timer.getFPS())
-
     -------------GUI------------
 
 end 
@@ -101,9 +99,9 @@ function graphicsInit()
 
     --shaders initialize 
     cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate)
-    vEffect = moonshine(GAMEWIDTH, GAMEHEIGHT, moonshine.effects.dmg).chain(moonshine.effects.pixelate)
+    vEffect = moonshine(GAMEWIDTH, GAMEHEIGHT, moonshine.effects.pixelate).chain(moonshine.effects.dmg)
     --vEffect.scanlines.opacity = 0.1
-    vEffect.dmg.palette = "default"
+    --vEffect.dmg.palette = "default"
     vEffect.pixelate.size = 0.0001
     --graphics initialization
     cEffect.desaturate.tint = {255, 0, 0}
@@ -130,6 +128,8 @@ function graphicsInit()
 
     love.graphics.setLineWidth(1)
 
+    roomInit()
+
     print("graphics initialized")
 
 end  
@@ -139,7 +139,7 @@ function inputInit()
     input:bind("right", "right")
     input:bind("up", "up")
     input:bind("down", "down")
-    input:bind("return", "enter")
+    input:bind("r", "enter")
     input:bind("space", "space")
 
     input:bind('f1', function()
@@ -181,6 +181,7 @@ function audioInit()
     snd_dead = love.audio.newSource("res/SFX/DEAD8bit.wav", "static")
     snd_alldead = love.audio.newSource("res/SFX/ALLDEAD8bit.wav", "static")
     snd_found = love.audio.newSource("res/SFX/FOUND8bit.wav", "static")
+    snd_door = love.audio.newSource("res/SFX/DOOR8bit.wav", "static")
 
     --tracker files loading
     love.audio.setEffect("myReverb", {type = "reverb", gain = 1, density = 5, decaytime = 3})
