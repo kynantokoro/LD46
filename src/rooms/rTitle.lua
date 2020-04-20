@@ -1,10 +1,24 @@
-rTitle = Object:extend()
+rTitle = rGame:extend()
 
 function rTitle:new()
+    rTitle.super.new(self)
 
+    self.next = "rOne"
 
     --initialize the room here!
     self.area = Area(self)
+
+    local palettes = {
+        "default",
+        "second",
+        "third",
+        "fourth",
+    }
+
+    love.math.setRandomSeed(love.timer.getTime())
+    local randi = math.floor(love.math.random(4))
+
+    vEffect.dmg.palette = palettes[randi]
     
     self.area:addGameObject("TitleScreen", 0, 0, "res/atlas/TitleScreen.png")
 
@@ -12,22 +26,19 @@ function rTitle:new()
     love.audio.stop()
     self.music:play()
 
-    self.state = "VIEW"
+    self.transition = false
 
+    self.t = 0
+    self.pixelsize = 5
 end 
 
-function rTitle:update(dt) 
+function rTitle:update(dt)
+    rTitle.super.update(self, dt)
+
     self.area:update(dt)
 
-    if input:pressed("reset") then 
-        Timer.after(1, function() 
-            self.state = "CHANGE"
-        end)
-    end 
-
-    if self.state == "CHANGE" then 
-        roomInit()
-        gotoRoom("rOne")
+    if input:pressed("space") then
+        self.transition = true
     end 
 
     --[[
@@ -39,11 +50,11 @@ function rTitle:update(dt)
 end 
 
 function rTitle:draw() 
+    vEffect(function()
+        camera:attach()
+        
+        self.area:draw()
 
-    camera:attach()
-    
-    self.area:draw()
-
-    camera:detach()
-
+        camera:detach()
+    end)
 end 

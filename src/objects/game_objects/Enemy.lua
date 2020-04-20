@@ -6,6 +6,8 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
     self.tag = "Enemy"
     self.colmap = current_map
     self.sprite = peachy.new(animation_path, initial_tag)
+    self.particle = ParticleSystem(self.area, self.x, self.y, "res/FX/particle.png", "FIRE")
+    self.exclamation = peachy.new("res/sprite/key.json", "FOUND")
     self.facing = 1
     self.walk_spd = 0.3
     self.hsp = 0
@@ -16,10 +18,12 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
     self.vsp_decimal = 0
     self.foundbuffer = 0
     self.foundtime = 5
+    self.stop = false
     self.stopcount = 0
-    self.stoptime = 120
+    self.stoptime = 0
     self.attackCount = 0
     self.attackCooldown = 60
+    self.semidead = false
     self.states = {}
 
     local IDLE = {
@@ -34,13 +38,18 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
                 if self.facing > 0 then self.facing = -1 elseif self.facing < 0 then self.facing = 1 end 
                 self.state = "MOVE"
                 self.stopcount = 0
+                self.stoptime = 30
             end 
+
+            self.sprite:update(dt)
 
             self:Collisions()
 
         end,
         draw = function ()
-            self.sprite:draw(self.x, self.y)
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + GRID end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
         end 
     }
     local MOVE = {
@@ -55,9 +64,13 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
                 self.stop = false
             end 
 
+            self.sprite:update(dt)
+
         end,
         draw = function ()
-            self.sprite:draw(self.x, self.y)
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + GRID end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
         end 
     }
     local ATTACK = {
@@ -71,17 +84,28 @@ function Enemy:new(area, x, y, animation_path, initial_tag)
             end 
         end,
         draw = function ()
-            love.graphics.setColor(1, 0,0,1)
-            self.sprite:draw(self.x, self.y)
-            love.graphics.setColor(1, 1,1,1)
+            local draw_x = self.x 
+            if self.facing < 0 then draw_x = self.x + GRID end
+            self.sprite:draw(draw_x, self.y, 0, self.facing)
         end 
     }
     local DEAD = {
         update = function (dt) 
-
+            Timer.after(0.5, function() 
+                self.semidead = true
+            end)
+            Timer.after(8, function() 
+                self.dead = true
+            end)
+            self.particle:update(dt, self.x, self.y, self.facing)
         end,
         draw = function ()
-            
+            if self.semidead == false then 
+                local draw_x = self.x 
+                if self.facing < 0 then draw_x = self.x + GRID end
+                self.sprite:draw(draw_x, self.y, 0, self.facing)
+            end 
+            self.particle:draw()
         end 
     }
     self.states["IDLE"] = IDLE 
@@ -94,14 +118,20 @@ end
 
 function Enemy:update(dt) 
     self.states[self.state].update(dt)
+    self.exclamation:update(dt)
 end 
 
 function Enemy:draw() 
     self.states[self.state].draw()
-    
-    love.graphics.print(self.facing, self.x, self.y)
-    love.graphics.print(self.state, self.x+10, self.y)
-    love.graphics.line(self.x, self.y + (GRID*2) - 1, self.x + 10, self.y + (GRID*2) - 1)
+
+    if self.state == "ATTACK" then 
+        self.exclamation:draw(self.x - math.abs(math.sin(t*0.1)) * 4 , self.y - (GRID*2) - math.abs(math.sin(t*0.1)*4 ), 0, 1 + math.abs(math.sin(t*0.1)), 1 + math.abs(math.sin(t*0.1)))
+    end 
+
+    --love.graphics.print(self.facing, self.x, self.y)
+    --love.graphics.print(self.state, self.x+10, self.y)
+    --love.graphics.print(self.id, self.x+10, self.y-10)
+    --love.graphics.line(self.x, self.y + (GRID*2) - 1, self.x + 10, self.y + (GRID*2) - 1)
 end 
 
 function Enemy:calculateMovement()

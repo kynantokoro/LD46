@@ -4,8 +4,22 @@ function Player:new(area, x, y, animation_path, animation_tag)
     Player.super.new(self, area, x, y)
 
     self.tag = "Player"
+    self.game = false
     self.colmap = current_map
     self.sprite = peachy.new(animation_path, animation_tag)
+    self.thankyou = love.graphics.newImage("res/atlas/sheishei.png")
+    self.bullet = peachy.new("res/sprite/bullet.json", "BULLET")
+    self.bullet_anim = false
+    self.bullet:onLoop(function()
+        self.bullet_anim = false
+    end )
+    self.play_found = true    
+    self.image_xscale = 1 
+    self.image_yscale = 1
+    self.hasKey = false
+    self.knife = peachy.new("res/sprite/knife.json", "hold")
+    self.knifeframe = 0
+    self.knifeinitial = 30
     self.vipx = self.x 
     self.vipy = self.y
     self.vipimage = peachy.new("res/sprite/Vip.json", "IDLE")
@@ -20,7 +34,7 @@ function Player:new(area, x, y, animation_path, animation_tag)
     self.attacked = false
     self.stabs = 0
     self.stabs_time = 0
-    self.stabs_cooldown = 120
+    self.stabs_cooldown = 0
     self.jumps = 0
     self.jump_spd = -3.8
     self.VIPjump_spd = -2.8
@@ -33,6 +47,7 @@ function Player:new(area, x, y, animation_path, animation_tag)
     self.offset_buffer_y = 0 
     self.collision_buffer = 0
     self.collision_buffer_y = 0
+    self.vipOutOfBound = false 
     self.states = {}
     local VIP = {
         update = function(dt) 
@@ -43,7 +58,7 @@ function Player:new(area, x, y, animation_path, animation_tag)
             self:calculateMovement()
 
             if self:onGround() then self.jumps = self.VIPjumps_initial end
-            if input:pressed("up") then 
+            if input:pressed("up") and self.game == true then 
                 self:VIPjumped()
             end 
 
@@ -53,15 +68,17 @@ function Player:new(area, x, y, animation_path, animation_tag)
 
             self:Collisions()
 
-            self.sprite:update(dt)
-            self.vipx = self.x 
-            self.vipy = self.y
-            self.offset_buffer_y = 0
+            if self.game == true then 
+                self.sprite:update(dt)
+                self.vipx = self.x 
+                self.vipy = self.y
+                self.offset_buffer_y = 0
+            end 
         end,
         draw = function()
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + (GRID*2) end
-            self.sprite:draw(draw_x, self.y, 0, self.facing)
+            self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
         end 
     }
     local IDLE = {
@@ -82,14 +99,16 @@ function Player:new(area, x, y, animation_path, animation_tag)
                 self.state = "WALK"
             end 
 
-            self.sprite:update(dt)
-            self.vipimage:update(dt)
+            if self.game == true then 
+                self.sprite:update(dt)
+                self.vipimage:update(dt)
+            end 
         end, 
         draw = function() 
             self.vipimage:draw(self.vipx, self.vipy)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
-            self.sprite:draw(draw_x, self.y, 0, self.facing)
+            self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
         end 
     }
     local WALK = {
@@ -114,14 +133,16 @@ function Player:new(area, x, y, animation_path, animation_tag)
                 self.state = "IDLE"
             end 
 
-            self.sprite:update(dt)
-            self.vipimage:update(dt)
+            if self.game == true then 
+                self.sprite:update(dt)
+                self.vipimage:update(dt)
+            end 
         end, 
         draw = function() 
             self.vipimage:draw(self.vipx, self.vipy)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
-            self.sprite:draw(draw_x, self.y, 0, self.facing)
+            self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
         end 
     }
     local JUMP = {
@@ -143,15 +164,16 @@ function Player:new(area, x, y, animation_path, animation_tag)
             end
 
             self:Collisions()
-
-            self.sprite:update(dt)
-            self.vipimage:update(dt)
+            if self.game == true then 
+                self.sprite:update(dt)
+                self.vipimage:update(dt)
+            end 
         end, 
         draw = function() 
             self.vipimage:draw(self.vipx, self.vipy)
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + GRID end
-            self.sprite:draw(draw_x, self.y, 0, self.facing)
+            self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
         end 
     }
     local VIPJUMP = {
@@ -174,13 +196,15 @@ function Player:new(area, x, y, animation_path, animation_tag)
 
             self:Collisions()
 
-            self.sprite:update(dt)
-            self.vipimage:update(dt)
+            if self.game == true then 
+                self.sprite:update(dt)
+                self.vipimage:update(dt)
+            end 
         end, 
         draw = function() 
             local draw_x = self.x 
             if self.facing < 0 then draw_x = self.x + (GRID*2) end
-            self.sprite:draw(draw_x, self.y, 0, self.facing)
+            self.sprite:draw(draw_x, self.y, 0, self.facing*self.image_xscale, self.image_yscale)
         end 
     }
     self.states["VIP"] = VIP 
@@ -192,13 +216,13 @@ function Player:new(area, x, y, animation_path, animation_tag)
 end 
 
 function Player:update(dt)
-    if input:pressed("down") then
+    if input:pressed("down") and self.game == true then
         if self.state == "VIP" and self:onGround() then
             self.state = "IDLE"
             snd_pickdown:play()
             self.sprite:setTag("IDLE")
         elseif self.state == "IDLE" then 
-            if self.x >= self.vipx - GRID and self.x <= self.vipx + GRID and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then 
+            if self.x >= self.vipx - (GRID*2) and self.x <= self.vipx + (GRID*2) and self.y >= self.vipy - GRID and self.y <= self.vipy + GRID then 
                 self.state = "VIP" 
                 snd_pickup:play()
                 self.sprite:setTag("VIP")
@@ -206,50 +230,89 @@ function Player:update(dt)
         end 
     end 
 
+    self.attacked = false
     if input:pressed("space") then 
-        if self.state ~= "VIP" and self.state ~= "VIPJUMP" then 
+        if self.state ~= "VIP" and self.state ~= "VIPJUMP" and self.game == true then 
+            self.bullet_anim = true 
             self:stabbed()
         end 
     end 
 
+    if self.bullet_anim == true then  
+        self.bullet:update(dt)
+    end 
+
+    self.knife:update(dt)
+
     self.states[self.state].update(dt)
 
+    if self.vipOutOfBound then 
+        if self.found == false then 
+            local dif = (math.abs(self.x - self.vipx) - GAMEWIDTH) * 0.1
+            vEffect.pixelate.size = 0.0001 + dif
+        else 
+            vEffect.pixelate.size = 0.0001 
+        end 
+    end 
+
     if self.found == true then 
+        if self.play_found then
+            snd_found:stop()
+            snd_found:play()
+        end 
+        self.play_found = false
         cEffect.desaturate.strength = 0.5
-        camera.rotation = math.sin(t*0.1) * 0.1
-        camera.scale = 1 + math.sin(t*0.175) * 0.05
+        camera.rotation = math.sin(t*0.1) * 0.01
+        camera.scale = 1 + math.sin(t*0.175) * 0.01
     end 
 
     self.stabs_time = self.stabs_time + 1
-
-    print(self.stabs_time)
 
 end 
 
 function Player:draw()
     self.states[self.state].draw()
-    love.graphics.print(self.state, self.x, self.y)
-    love.graphics.print(self.jumps, self.x, self.y+10)
-    love.graphics.line(self.x, self.y + (GRID*2) - 1, self.x+10, self.y + (GRID*2) - 1)
-    love.graphics.line(self.x, self.y + (GRID) + 5, self.x+10, self.y + (GRID) + 5)
+
+    if self.bullet_anim == true then 
+        self.bullet:draw(self.x, self.y + GRID, 0, self.facing)
+    end 
+
+    local draw_x = self.x 
+    if self.state ~= "VIP" and self.state ~= "VIPJUMP" then 
+        --love.graphics.draw(self.thankyou, self.vipx - GRID, self.vipy - (GRID*4))
+        if self.facing > 0 then draw_x = self.x + GRID end
+        self.knife:draw(draw_x, self.y+GRID, 0, self.facing)
+    else 
+        
+    end 
+
+    --love.graphics.print(self.state, self.x, self.y)
+    --love.graphics.print(self.attacked and 'true' or 'false', self.x, self.y+10)
 end 
 
 function Player:calculateMovement()
     
     local isDrag = false
 
-    --calculate horizontal movement
-    if input:down("left") and input:down("right") then 
-        isDrag = true
-    elseif input:down("left") then 
-        self.hsp = self.hsp - self.walk_spd
-        isDrag = false 
-    elseif input:down("right") then 
-        self.hsp = self.hsp + self.walk_spd
-        isDrag = false 
+    if self.game == true then 
+        --calculate horizontal movement
+        if input:down("left") and input:down("right") then 
+            isDrag = true
+        elseif input:down("left") then 
+            self.hsp = self.hsp - self.walk_spd
+            isDrag = false 
+        elseif input:down("right") then 
+            self.hsp = self.hsp + self.walk_spd
+            isDrag = false 
+        else 
+            isDrag = true
+        end 
     else 
-        isDrag = true
+        self.hsp = 0 
+        self.vsp = 0
+        idDrag = true 
     end 
+
     --apply gravity 
     self.vsp = self.vsp + GRAVITY 
 
@@ -292,14 +355,14 @@ function Player:Collisions()
     
     if t1 ~= 0 or t2 ~= 0 or t3 ~= 0 then 
         --collision found 
-        if self.state ~= "JUMP" then self.offset_buffer = self.offset_buffer + 1 end 
+        if self.state ~= "JUMP" or self.state ~= "VIPJUMP" then self.offset_buffer = self.offset_buffer + 1 end 
         if self.hsp > 0 then 
             if self.x % GRID ~= 0 then 
                 self.x = self.x - (self.x % GRID) + GRID
             else 
                 self.x = self.x
             end 
-            if self.state ~= "JUMP" then 
+            if self.state ~= "JUMP" or self.state ~= "VIPJUMP" then 
                 self.camoffset_x = 0   --????        
                 if self.offset_buffer > 5 then
                     self.camoffset_x = GRID * 12            
@@ -307,7 +370,7 @@ function Player:Collisions()
             end 
         elseif self.hsp < 0 then 
             self.x = self.x - (self.x % GRID) - (side - self.x) 
-            if self.state ~= "JUMP" then
+            if self.state ~= "JUMP" or self.state ~= "VIPJUMP" then
                 self.camoffset_x = 0
                 if self.offset_buffer > 5 then
                     self.camoffset_x = -(GRID * 11)            
@@ -328,8 +391,10 @@ function Player:Collisions()
         end 
         
     end 
-
-    self.x = self.x + self.hsp
+    
+    if self.game == true then 
+        self.x = self.x + self.hsp
+    end 
 
     --vertical collisions
     local side 
@@ -342,7 +407,6 @@ function Player:Collisions()
     local t3 = self.colmap:getAtPixel(self.x+(GRID-1), side + self.vsp)
 
     if t1 ~= 0 or t2 ~= 0 or t3 ~= 0 then 
-        self.offset_buffer_y = self.offset_buffer_y + 1 
         --collision found 
         if self.vsp > 0 then
             if self.y % GRID ~= 0 then 
@@ -351,11 +415,13 @@ function Player:Collisions()
                 self.y = self.y
             end 
             if self.state ~= "VIP" and input:down("down") then
+                self.offset_buffer_y = self.offset_buffer_y + 1 
                 if self.offset_buffer_y > 10 then
                     self.camoffset_y = 100            
                 end 
             else 
                 self.camoffset_y = 0
+                self.offset_buffer_y = 0
             end 
         end 
         self.vsp = 0
@@ -370,7 +436,9 @@ function Player:Collisions()
         end 
     end 
 
-    self.y = self.y + self.vsp
+    if self.game == true then
+        self.y = self.y + self.vsp
+    end 
 end 
 
 function Player:jumped()
@@ -422,6 +490,9 @@ end
 
 function Player:stabbed() 
     if self.stabs_time > self.stabs_cooldown then 
+        snd_gun:stop()
+        snd_gun:play()
+        print("stab")
         self.attacked = true 
         self.stabs_time = 0
     end 

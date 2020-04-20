@@ -35,23 +35,24 @@ function love.update(dt)
     Timer.update(dt)
 
     --increment global timer 
-    t = t + 1
+    t = t + 1   
 
     if current_room then current_room:update(dt) end 
 end 
 
 function love.draw() 
+   -- camera.scale = (0.5)
     love.graphics.setCanvas(vCanvas)
     love.graphics.clear()
-    vEffect(function()
+    
         -------------GAME------------
 
         --draw things on the virtual canvas
         if current_room then current_room:draw() end 
-        camera:draw()
+        --camera:draw()
 
         -------------GAME------------
-    end)
+    
     love.graphics.setCanvas()
     cEffect(function()
         --scale the vCanvas
@@ -100,8 +101,9 @@ function graphicsInit()
 
     --shaders initialize 
     cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate)
-    vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines).chain(moonshine.effects.pixelate)
-    vEffect.scanlines.opacity = 0.1
+    vEffect = moonshine(GAMEWIDTH, GAMEHEIGHT, moonshine.effects.dmg).chain(moonshine.effects.pixelate)
+    --vEffect.scanlines.opacity = 0.1
+    vEffect.dmg.palette = "default"
     vEffect.pixelate.size = 0.0001
     --graphics initialization
     cEffect.desaturate.tint = {255, 0, 0}
@@ -138,7 +140,7 @@ function inputInit()
     input:bind("up", "up")
     input:bind("down", "down")
     input:bind("return", "enter")
-    input:bind("space", "reset")
+    input:bind("space", "space")
 
     input:bind('f1', function()
         print("Before collection: " .. collectgarbage("count")/1024)
@@ -168,16 +170,29 @@ function audioInit()
     snd_jump2 = love.audio.newSource("res/SFX/jump8bit.wav", "static")
     snd_jump3 = love.audio.newSource("res/SFX/jump8bit.wav", "static")
     snd_landing = love.audio.newSource("res/SFX/landing8bit.wav", "static")
+    snd_attack = love.audio.newSource("res/SFX/landing8bit.wav", "static")
     snd_pickdown = love.audio.newSource("res/SFX/pickdown8bit.wav", "static")
     snd_pickup = love.audio.newSource("res/SFX/pickup8bit.wav", "static")
     snd_walking = love.audio.newSource("res/SFX/walking8bit.wav", "static")
+    snd_thankyou = love.audio.newSource("res/SFX/thankyou8bit.wav", "static")
+    snd_yourewelcome = love.audio.newSource("res/SFX/yourewelcome8bit.wav", "static")
+    snd_gun = love.audio.newSource("res/SFX/GUN8bit.wav", "static")
+    snd_key = love.audio.newSource("res/SFX/KeyPickup8bit.wav", "static")
+    snd_dead = love.audio.newSource("res/SFX/DEAD8bit.wav", "static")
+    snd_alldead = love.audio.newSource("res/SFX/ALLDEAD8bit.wav", "static")
+    snd_found = love.audio.newSource("res/SFX/FOUND8bit.wav", "static")
 
     --tracker files loading
     love.audio.setEffect("myReverb", {type = "reverb", gain = 1, density = 5, decaytime = 3})
     --snd_noise = love.audio.newSource("res/tracker/gamenoise.it", "stream")
     --snd_noise:setEffect("myReverb")
-    
+
+    snd_yourewelcome:setPitch(0.5)
     snd_landing:setPitch(1.4)
+    snd_walking:setVolume(0.6)
+    snd_jump1:setVolume(0.6)
+    snd_jump2:setVolume(0.6)
+    snd_jump3:setVolume(0.6)
     snd_jump2:setPitch(1.02)
     snd_jump3:setPitch(1.04)
 
@@ -288,7 +303,7 @@ function roomInit()
     --shaders initialize 
     --cEffect = moonshine(windowWidth, windowHeight, moonshine.effects.desaturate)
     --vEffect = moonshine(GAMEWIDTH*2, GAMEHEIGHT, moonshine.effects.scanlines)
-    vEffect.scanlines.opacity = 0.1
+    --vEffect.scanlines.opacity = 0.1
     --graphics initialization
     cEffect.desaturate.tint = {255, 0, 0}
     cEffect.desaturate.strength = 0

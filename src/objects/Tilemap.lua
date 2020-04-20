@@ -123,10 +123,23 @@ function Tilemap:new(area, x, y, map_path)
         elseif layer.type == "objectgroup" then 
             for i, object in ipairs(layer.objects) do 
                 local game_object = object.type 
+                local etype = object.properties["etype"]
                 local animation_path = object.properties["animation_path"]
                 local initial_tag = object.properties["initial_tag"]
                 print(game_object)
-                area:addGameObject(game_object, object.x, object.y, animation_path, initial_tag)
+                if game_object == "Player" then 
+                    area:addGameObject(game_object, object.x, object.y, animation_path, initial_tag)
+                elseif game_object == "Enemy" then 
+                    if etype == "Red" then 
+                        area:addGameObject("RedEnemy", object.x, object.y, animation_path, initial_tag)
+                    elseif etype == "Green" then
+                        area:addGameObject("GreenEnemy", object.x, object.y, animation_path, initial_tag)
+                    end 
+                elseif game_object == "Door" then 
+                    area:addGameObject(game_object, object.x, object.y, initial_tag)
+                elseif game_object == "Key" then 
+                    area:addGameObject(game_object, object.x, object.y)
+                end 
             end 
         end
     end
@@ -138,7 +151,7 @@ function Tilemap:update(dt)
 end 
 
 function Tilemap:draw()
-    love.graphics.draw(self.BackgroundBatch)
+    love.graphics.draw(self.BackgroundBatch, math.floor(camera.x*0.5) - 100)
     love.graphics.draw(self.collisionBatch)
     love.graphics.draw(self.ForegroundBatch)
 end 
